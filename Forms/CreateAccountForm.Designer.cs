@@ -34,7 +34,7 @@
             label1 = new Label();
             SuspendLayout();
             // 
-            // button2
+            //button2
             // 
             button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             button2.BackColor = Color.Olive;
@@ -46,9 +46,9 @@
             button2.TabIndex = 9;
             button2.Text = "CURRENT";
             button2.UseVisualStyleBackColor = false;
-            button2.Click += button2_Click_1;
+            button2.Click += button2_Click;
             // 
-            // button1
+            //button1
             // 
             button1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             button1.BackColor = Color.Peru;
@@ -60,7 +60,7 @@
             button1.TabIndex = 8;
             button1.Text = "SAVINGS";
             button1.UseVisualStyleBackColor = false;
-            button1.Click += button1_Click_1;
+            button1.Click += button1_Click;
             // 
             // label2
             // 

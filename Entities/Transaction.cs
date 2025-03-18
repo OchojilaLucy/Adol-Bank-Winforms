@@ -11,6 +11,7 @@ namespace AdolBank
             TransactionType = transactionType;
             Amount = amount;
             TransactionDate = DateTime.Now.ToString("MM/dd/yyyy");
+            AccountNumber = accountNumber;  
         }
         public int TransactionId { get; set; }
         public string AccountNumber { get; set; }

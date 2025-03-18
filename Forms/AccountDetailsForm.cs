@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using AdolBank;
+using AdolBankWinforms.Helpers;
 
 namespace AdolBankWinforms.Forms
 {
@@ -16,24 +11,29 @@ namespace AdolBankWinforms.Forms
         public AccountDetailsForm()
         {
             InitializeComponent();
-
         }
 
         private void AccountDetailsForm_Load(object sender, EventArgs e)
         {
-            FileStorage.LoadAccounts(); // Load account data from file storage
+            if (!UserSession.IsLoggedIn)
+            {
+                MessageBox.Show("You must log in to view account details.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.Close();
+                return;
+            }
 
-            LoadAccountDetails(); // Populate DataGridView with account details
+            FileStorage.LoadAccounts(); 
+
+            LoadAccountDetails(); 
         }
 
         private void LoadAccountDetails()
         {
             try
             {
-                // Clear previous rows but keep column structure
-                dataGridView1.Rows.Clear();
+                dataGridView1.Rows.Clear(); 
 
-                // If columns haven't been added yet, define them
+                
                 if (dataGridView1.Columns.Count == 0)
                 {
                     dataGridView1.Columns.Add("AccountName", "Account Name");
@@ -42,35 +42,36 @@ namespace AdolBankWinforms.Forms
                     dataGridView1.Columns.Add("AccountType", "Account Type");
                 }
 
-                // Check if accounts exist
-                if (DataStore.accounts != null && DataStore.accounts.Any())
+                Customer loggedInCustomer = UserSession.LoggedInCustomer;
+
+                
+                var customerAccounts = DataStore.accounts.Where(account => account.AccountName == loggedInCustomer.FullName);
+                
+                if (customerAccounts != null)
                 {
-                    foreach (var account in DataStore.accounts)
+                    foreach (var account in customerAccounts)
                     {
                         dataGridView1.Rows.Add(
                             account.AccountName,
                             account.AccountNumber,
-                            account.Balance.ToString("C"), // Format balance as currency
+                            account.Balance.ToString("C"), 
                             account.AccountType
                         );
                     }
                 }
                 else
                 {
-                    MessageBox.Show("No account data available.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("No accounts found for this user.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                // Adjust UI properties
+                // Adjust DataGridView settings
                 dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                dataGridView1.ReadOnly = true; // Make it read-only to prevent editing
+                dataGridView1.ReadOnly = true;
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
-                MessageBox.Show( ex.Message);
+                MessageBox.Show($"An error occurred while loading account details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-
-       
     }
 }

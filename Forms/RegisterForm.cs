@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AdolBank;
@@ -14,83 +9,79 @@ namespace AdolBankWinforms.Forms
 {
     public partial class RegisterForm : Form
     {
-        Validation validation = new Validation();
+        private Validation validation = new Validation();
+
         public RegisterForm()
         {
             InitializeComponent();
         }
-        public void Register()
+
+        private async Task RegisterAsync()
         {
             try
             {
-                string firstName = textBox1.Text;
+                string firstName = textBox1.Text.Trim();
+                string lastName = textBox2.Text.Trim();
+                string email = textBox3.Text.Trim();
+                string password = textBox4.Text;
+                string confirmPassword = textBox5.Text;
 
-                if (!validation.IsValidName(firstName))
+               
+                if (!validation.IsValidName(firstName) || !validation.IsValidName(lastName))
                 {
-                    MessageBox.Show("Name must start with an uppercase letter and must not contain numbers or special characters.");
-                }
-
-                string lastName = textBox2.Text;
-
-                if (!validation.IsValidName(lastName))
-                {
-                    MessageBox.Show("Name must start with an uppercase letter and must not contain numbers or special characters.");
-                }
-
-                string email = textBox3.Text;
-
-                if (!validation.IsValidEmail(email))
-                {
-                    MessageBox.Show("Invalid Email format.");
-
-
-                }
-
-                if (validation.IsEmailExist(email))
-                {
-                    MessageBox.Show("Email already exists. Please try again.");
+                    MessageBox.Show("Name must start with an uppercase letter and must not contain numbers or special characters.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
+                
+                if (!validation.IsValidEmail(email))
+                {
+                    MessageBox.Show("Invalid Email format.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
-                string password = textBox4.Text;
+                
+                FileStorage.LoadCustomers();
+                if (validation.IsEmailExist(email))
+                {
+                    MessageBox.Show("Email already exists. Please try again.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
                 if (!validation.IsValidPassword(password))
                 {
-                    MessageBox.Show("Password must contain at least 8 characters, including at least an uppercase letter, a lowercase letter, number and special character");
-                    //return;
-                }
-
-
-                string confirmPassword = textBox5.Text;
-
-                if (password != confirmPassword)
-                {
-                    MessageBox.Show("Passwords do not match. Please try again.");
+                    MessageBox.Show("Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
+                if (password != confirmPassword)
+                {
+                    MessageBox.Show("Passwords do not match. Please try again.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                
                 Customer customer = new Customer(firstName, lastName, email, password);
                 DataStore.customers.Add(customer);
-                FileStorage.SaveCustomersAsync(DataStore.customers);
+                await FileStorage.SaveCustomersAsync(DataStore.customers);
 
-                MessageBox.Show("Customer created successfully!");
-                CreateAccountForm createAccountForm = new CreateAccountForm();
-                createAccountForm.Show();
+                MessageBox.Show("Customer created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                
+                this.Hide();
+                CustomerServiceForm customerServiceForm = new CustomerServiceForm();
+                customerServiceForm.ShowDialog();
+                this.Close();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-
-
-        private void button1_Click_1(object sender, EventArgs e)
+        private async void button1_Click_1(object sender, EventArgs e)
         {
-            Register();
+            await RegisterAsync();
         }
-
-        
     }
 }

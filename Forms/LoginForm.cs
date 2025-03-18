@@ -25,36 +25,33 @@ namespace AdolBankWinforms.Forms
         {
             try
             {
-                string email = textBox1.Text;
+                string email = textBox1.Text.Trim();
 
-                string password = textBox2.Text;
+                string password = textBox2.Text.Trim();
 
-                customer = new Customer("", "", email, password);
+                Customer authenticatedCustomer = Authenticate.Login(email, password);
 
-
-                if (Authenticate.Login(email, password) != null)
+                if (authenticatedCustomer != null)
                 {
                     MessageBox.Show("Login successful");
-                    customer.FirstName = Authenticate.customer.FirstName;
-                    AccountServiceForm accountServiceForm = new AccountServiceForm();
-                    accountServiceForm.ShowDialog();
+                    
+                    UserSession.SetCustomer(authenticatedCustomer);
 
+                    AccountServiceForm accountServiceForm = new AccountServiceForm();
+                    accountServiceForm.Show();
+
+                    this.Hide();
                 }
                 else
                 {
-                    MessageBox.Show("Invalid email or password");
-
+                    MessageBox.Show("Invalid email or password", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        //private void LoginForm_Load(object sender, EventArgs e)
-        //{
-
-        //}
     }
 }

@@ -14,80 +14,96 @@ namespace AdolBankWinforms.Forms
 {
     public partial class TransferForm : Form
     {
-        Customer customer = Authenticate.customer;
+        Customer customer;
         TransactionService transactionService = new TransactionService();
         public TransferForm()
         {
             InitializeComponent();
         }
-        public Account FindAccountByNumber(Customer customer, string accountNumber)
+
+        private void TransferForm_Load(object sender, EventArgs e)
         {
             FileStorage.LoadAccounts();
-            return DataStore.accounts.Find(account => account.AccountNumber == accountNumber);
+            if (!UserSession.IsLoggedIn)
+            {
+                MessageBox.Show("You must log in to transfer.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.Close();
+                return;
+            }
+
+            customer = UserSession.LoggedInCustomer;
         }
-        private void button1_Click_1(object sender, EventArgs e)
+
+        public Account FindAccountByNumber(Customer customer, string accountNumber)
+        {
+            
+
+            return DataStore.accounts
+                .FirstOrDefault(account => account.AccountNumber == accountNumber);
+        }
+        
+        private async void button1_Click_1(object sender, EventArgs e)
         {
             try
             {
-                string sourceNo = textBox1.Text;
-                string beneficiaryNo = textBox2.Text;
-                 
-               
+                string sourceNo = textBox1.Text.Trim();
+                string beneficiaryNo = textBox2.Text.Trim();
+                if (string.IsNullOrWhiteSpace(sourceNo) || string.IsNullOrWhiteSpace(beneficiaryNo))
+                {
+                    MessageBox.Show("Please enter both source and beneficiary account numbers.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (!decimal.TryParse(textBox2.Text.Trim(), out decimal amount) || amount <= 0)
+                {
+                    MessageBox.Show("Invalid deposit amount. Please enter a positive number.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 Account sourceAccount = FindAccountByNumber(customer, sourceNo);
                 Account destinationAccount = FindAccountByNumber(customer, beneficiaryNo);
 
                 if (sourceAccount == null || destinationAccount == null)
                 {
-                    MessageBox.Show("One or both account numbers are invalid.");
-
+                    MessageBox.Show("One or both account numbers are invalid.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
-                if (!decimal.TryParse(textBox3.Text, out decimal amount) || amount <= 0)
-                {
-                    MessageBox.Show("Invalid amount");
-                }
+               
 
                 if (amount > sourceAccount.Balance)
                 {
-                    MessageBox.Show("Insufficient Funds!");
+                    MessageBox.Show("Insufficient Funds!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 }
-                if (sourceAccount.AccountType == AccountType.Savings)
+                if (sourceAccount.AccountType == AccountType.Savings && (sourceAccount.Balance - amount) < sourceAccount.MinBalance)
                 {
-                    if (sourceAccount.Balance <= sourceAccount.MinBalance)
-                    {
-                        MessageBox.Show("Insufficient Funds");
-                        return;
-                    }
-                    sourceAccount.Balance -= amount;
-                    destinationAccount.Balance += amount;
+                    MessageBox.Show("Insufficient Funds: You must maintain the minimum balance for a savings account.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
                 sourceAccount.Balance -= amount;
                 destinationAccount.Balance += amount;
 
                 var sDescription = $"Transfer to {customer.FullName}";
                 var dDescription = $"Transfer by {customer.FullName}";
+
                 transactionService.CreateTransaction(sDescription, amount, sourceNo);
                 transactionService.CreateTransaction(dDescription, amount, beneficiaryNo);
+
+                await FileStorage.SaveAccountsAsync(DataStore.accounts);
+
+
                 MessageBox.Show("Transfer successful");
             }
-            catch (Exception )
+            catch (Exception ex)
             {
-                MessageBox.Show($"Please try again.");
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
 
-        private void label4_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void TransferForm_Load(object sender, EventArgs e)
-        {
-
-        }
-
+       
+        
         
     }
 }

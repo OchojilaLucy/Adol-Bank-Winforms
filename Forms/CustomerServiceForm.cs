@@ -26,12 +26,14 @@ namespace AdolBankWinforms.Forms
         {
             LoginForm loginForm = new LoginForm();
             loginForm.Show();
+            
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
             RegisterForm registerForm = new RegisterForm();
             registerForm.Show();
+            
         }
 
         private void label3_Click(object sender, EventArgs e)

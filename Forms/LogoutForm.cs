@@ -21,19 +21,23 @@ namespace AdolBankWinforms.Forms
 
         private void LogoutForm_Load(object sender, EventArgs e)
         {
+            DialogResult result = MessageBox.Show("Are you sure you want to log out?",
+                                         "Logout",
+                                         MessageBoxButtons.YesNo,
+                                         MessageBoxIcon.Question);
 
+            if (result == DialogResult.Yes)
+            {
+                // Clear session
+                UserSession.Clear();
+
+                // Show login form again
+                LoginForm login = new LoginForm();
+                login.Show();
+                this.Close();  // Close dashboard
+            }
         }
 
-        private void button1_Click_1(object sender, EventArgs e)
-        {
-            MessageBox.Show("Logout Successful");
-            return;
-        }
-
-        private void button2_Click_1(object sender, EventArgs e)
-        {
-            AccountServiceForm accountServiceForm = new AccountServiceForm();
-            accountServiceForm.ShowDialog();
-        }
+       
     }
 }

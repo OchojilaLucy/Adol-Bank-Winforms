@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AdolBank;
@@ -14,67 +9,84 @@ namespace AdolBankWinforms.Forms
 {
     public partial class CreateAccountForm : Form
     {
-        Customer customer = Authenticate.customer;
+        private Customer customer;
+
         public CreateAccountForm()
         {
             InitializeComponent();
         }
 
-        public void Savings()
-        {
-            try
-            {
-                string accountNumber = GenerateAccountNumber();
-                AccountType accountType = AccountType.Savings;
-                Account account = new Account(customer.FullName, accountNumber, accountType);
-                DataStore.accounts.Add(account);
-                FileStorage.SaveAccountsAsync(DataStore.accounts);
-
-                MessageBox.Show($"\tAccount name: {customer.FullName}\n\tAccount number: {account.AccountNumber}\n\tAccount type: {account.AccountType}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-        public void Current()
-        {
-            try
-            {
-                string accountNumber = GenerateAccountNumber();
-                AccountType accountType = AccountType.Current;
-                Account account = new Account(customer.FullName, accountNumber, accountType);
-                DataStore.accounts.Add(account);
-                FileStorage.SaveAccountsAsync(DataStore.accounts);
-
-                MessageBox.Show($"\tAccount name: {customer.FullName}\n\tAccount number: {account.AccountNumber}\n\tAccount type: {account.AccountType}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-        public static string GenerateAccountNumber()
-        {
-            Random random = new Random();
-            return random.Next(1000000000, 1999999999).ToString(); // Generates a 10-digit number
-        }
-
-
-        private void button1_Click_1(object sender, EventArgs e)
-        {
-            Savings();
-        }
-
-        private void button2_Click_1(object sender, EventArgs e)
-        {
-            Current();
-        }
-
         private void CreateAccountForm_Load(object sender, EventArgs e)
         {
+            if (!UserSession.IsLoggedIn)
+            {
+                MessageBox.Show("You must log in to create an account.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.Close();
+                return;
+            }
 
+            customer = UserSession.LoggedInCustomer;
+        }
+
+        private async void CreateAccount(AccountType accountType)
+        {
+            try
+            {
+                if (customer == null)
+                {
+                    MessageBox.Show("No user is logged in.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                
+                if (customer.Accounts.Any(a => a.AccountType == accountType))
+                {
+                    MessageBox.Show($"You already have a {accountType} account.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string accountNumber = GenerateUniqueAccountNumber();
+                Account account = new Account(customer.FullName, accountNumber, accountType);
+
+                customer.Accounts.Add(account);
+
+                DataStore.accounts.Add(account);
+
+                await FileStorage.SaveAccountsAsync(DataStore.accounts);
+
+                MessageBox.Show($" Account created successfully!\n\n" +
+                                $"Account Name: {customer.FullName}\n" +
+                                $" Account Number: {account.AccountNumber}\n" +
+                                $" Account Type: {account.AccountType}",
+                                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GenerateUniqueAccountNumber()
+        {
+            Random random = new Random();
+            string accountNumber;
+
+            do
+            {
+                accountNumber = random.Next(1000000000, 1999999999).ToString();
+            } while (DataStore.accounts.Any(a => a.AccountNumber == accountNumber));
+
+            return accountNumber;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            CreateAccount(AccountType.Savings);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            CreateAccount(AccountType.Current);
         }
     }
-
 }

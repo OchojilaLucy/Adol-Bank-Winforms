@@ -28,14 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
-            button2 = new Button();
+           /* button2 = new Button();
             button1 = new Button();
-            label1 = new Label();
+            label1 = new Label();*/
             SuspendLayout();
             // 
             // button2
             // 
-            button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            /*button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             button2.BackColor = Color.DarkSeaGreen;
             button2.Font = new Font("Comic Sans MS", 11.25F);
             button2.ForeColor = Color.MidnightBlue;
@@ -78,14 +78,14 @@
             label1.Text = "LOG OUT ?";
             // 
             // LogoutForm
-            // 
+            // */
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Sienna;
             ClientSize = new Size(800, 450);
-            Controls.Add(button2);
-            Controls.Add(button1);
-            Controls.Add(label1);
+            //Controls.Add(button2);
+            //Controls.Add(button1);
+            //Controls.Add(label1);
             Name = "LogoutForm";
             Text = "LogoutForm";
             Load += LogoutForm_Load;
@@ -95,8 +95,8 @@
 
         #endregion
 
-        private Button button2;
-        private Button button1;
-        private Label label1;
+       // private Button button2;
+        //private Button button1;
+       // private Label label1;
     }
 }

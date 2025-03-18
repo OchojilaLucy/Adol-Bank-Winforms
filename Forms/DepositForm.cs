@@ -1,93 +1,88 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AdolBank;
 using AdolBankWinforms.Helpers;
 
-
-
 namespace AdolBankWinforms.Forms
 {
     public partial class DepositForm : Form
     {
-        Customer customer = Authenticate.customer;
-        TransactionService transactionService = new TransactionService();
+        private Customer customer;
+        private TransactionService transactionService = new TransactionService();
+
         public DepositForm()
         {
             InitializeComponent();
         }
 
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-        public Account FindAccountByNumber(Customer customer, string accountNumber)
+        private void DepositForm_Load(object sender, EventArgs e)
         {
             FileStorage.LoadAccounts();
-            return DataStore.accounts.Find(account => account.AccountNumber == accountNumber);
+            if (!UserSession.IsLoggedIn)
+            {
+                MessageBox.Show("You must log in to make a deposit.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.Close();
+                return;
+            }
+
+            customer = UserSession.LoggedInCustomer;
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        private Account FindAccountByNumber(string accountNumber)
         {
+            
 
-
+            return DataStore.accounts
+                .FirstOrDefault(account => account.AccountNumber == accountNumber);
         }
 
-        private void button1_Click_1(object sender, EventArgs e)
+        private async void button1_Click_1(object sender, EventArgs e)
         {
             try
             {
+                string accountNumber = textBox1.Text.Trim();
 
-                decimal minBalance = 1000;
-                string accountNumber = textBox1.Text;
+                if (string.IsNullOrWhiteSpace(accountNumber))
+                {
+                    MessageBox.Show("Please enter an account number.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
+                if (!decimal.TryParse(textBox2.Text.Trim(), out decimal amount) || amount <= 0)
+                {
+                    MessageBox.Show("Invalid deposit amount. Please enter a positive number.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-                Account account = FindAccountByNumber(customer, accountNumber);
+                Account account = FindAccountByNumber(accountNumber);
                 if (account == null)
                 {
-                    MessageBox.Show("Account not found.");
-
+                    MessageBox.Show("Account not found or does not belong to you.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
-
-                if (!decimal.TryParse(textBox2.Text, out decimal amount) || amount <= 0)
+                if (account.AccountType == AccountType.Savings && amount < account.MinBalance)
                 {
-                    MessageBox.Show("Invalid amount. ");
+                    MessageBox.Show("Minimum deposit for savings accounts is 1000.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
-                }
-                if (account.AccountType == AccountType.Savings)
-                {
-                    if (amount < minBalance)
-                    {
-                        MessageBox.Show("Minimum balance for savings account is 1000");
-                    }
-                }
                 account.Balance += amount;
-                var description = $"Deposit by {customer.FullName}";
+
+                var description = $"Deposit of {amount:C} by {customer.FullName}";
                 transactionService.CreateTransaction(description, amount, accountNumber);
-                MessageBox.Show("Deposit successful");
+
+                await FileStorage.SaveAccountsAsync(DataStore.accounts);
+                
+
+                MessageBox.Show($" Deposit successful!\n\nNew Balance: {account.Balance:C}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch(Exception )
+            catch (Exception ex)
             {
-
-                MessageBox.Show("Please try again");
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            
-
         }
-
-        private void DepositForm_Load(object sender, EventArgs e)
-        {
-            
-        }
-
-       
     }
 }

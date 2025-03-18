@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using AdolBank;
 using AdolBankWinforms.Helpers;
@@ -14,7 +7,8 @@ namespace AdolBankWinforms.Forms
 {
     public partial class AccountBalanceForm : Form
     {
-        Customer customer = Authenticate.customer;
+        private List<Account> accounts = new List<Account>(); 
+
         public AccountBalanceForm()
         {
             InitializeComponent();
@@ -22,33 +16,55 @@ namespace AdolBankWinforms.Forms
 
         private void AccountBalanceForm_Load(object sender, EventArgs e)
         {
+            if (!UserSession.IsLoggedIn)
+            {
+                MessageBox.Show("You must be logged in to check account balance.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.Close();
+                return;
+            }
 
-        }
-        private Account FindAccountByNumber(Customer customer, string accountNumber)
-        {
+            
             FileStorage.LoadAccounts();
-            return DataStore.accounts.Find(account => account.AccountNumber == accountNumber);
+            accounts = DataStore.accounts;
         }
+
+        private Account FindAccountByNumber(string accountNumber)
+        {
+            return accounts.Find(account => account.AccountNumber == accountNumber);
+        }
+
         private void button1_Click_1(object sender, EventArgs e)
         {
             try
             {
-                string accountNumber = textBox1.Text;
+                if (!UserSession.IsLoggedIn)
+                {
+                    MessageBox.Show("Please log in first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-                Account account = FindAccountByNumber(customer, accountNumber);
+                string accountNumber = textBox1.Text.Trim();
+
+                if (string.IsNullOrEmpty(accountNumber))
+                {
+                    MessageBox.Show("Please enter an account number.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Account account = FindAccountByNumber(accountNumber);
+
                 if (account == null)
                 {
-                    MessageBox.Show("Invalid account number.");
+                    MessageBox.Show("Invalid account number.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
-                MessageBox.Show($"Account Balance: {account.Balance}");
+
+                MessageBox.Show($"Account Balance: {account.Balance:C}", "Balance Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch (Exception) 
+            catch (Exception ex)
             {
-                MessageBox.Show("error");
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        
-        
     }
 }

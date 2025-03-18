@@ -15,14 +15,13 @@ namespace AdolBank
     {
         public static int IdCount { get; set; } = 0;
         Customer customer = Authenticate.customer;
-        public void CreateTransaction(string transactionType, decimal amount, string accountNumber)
+        public async void CreateTransaction(string transactionType, decimal amount, string accountNumber)
         {
             var transaction = new Transaction(IdCount, transactionType, amount, accountNumber);
             DataStore.transactions.Add(transaction);
 
-            //FileStorage.SaveAccountsAsync(DataStore.accounts);
-            //FileStorage.SaveTransactionsAsync(DataStore.transactions).Wait();
-
+            
+            await FileStorage.SaveTransactionsAsync(DataStore.transactions);
             IdCount++;
             //FileStorage.LoadAccounts();
             TransferForm transferForm = new TransferForm();

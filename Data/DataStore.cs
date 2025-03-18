@@ -14,7 +14,7 @@ namespace AdolBank
         public static List<Customer> customers = new List<Customer>();
         static DataStore()
         {
-            // Load data from files when the application starts
+            
             customers = FileStorage.LoadCustomers();
             accounts = FileStorage.LoadAccounts();
             transactions = FileStorage.LoadTransactions();

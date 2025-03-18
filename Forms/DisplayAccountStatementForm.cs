@@ -10,21 +10,33 @@ namespace AdolBankWinforms.Forms
 {
     public partial class DisplayAccountStatementForm : Form
     {
-        Customer customer = Authenticate.customer;
+        private Customer customer;
 
         public DisplayAccountStatementForm()
         {
             InitializeComponent();
         }
 
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void DisplayAccountStatementForm_Load(object sender, EventArgs e)
         {
+            FileStorage.LoadAccounts();
+             FileStorage.LoadTransactions();
+            if (!UserSession.IsLoggedIn)
+            {
+                MessageBox.Show("You must log in to view your account statement.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.Close();
+                return;
+            }
+
+            customer = UserSession.LoggedInCustomer;
         }
 
-        private Account FindAccountByNumber(Customer customer, string accountNumber)
+        private Account FindAccountByNumber(string accountNumber)
         {
             
-            return DataStore.accounts.Find(account => account.AccountNumber == accountNumber);
+
+            return DataStore.accounts
+                .FirstOrDefault(account => account.AccountNumber == accountNumber);
         }
 
         private async void button1_Click(object sender, EventArgs e)
@@ -39,22 +51,22 @@ namespace AdolBankWinforms.Forms
                     return;
                 }
 
-                Account account = FindAccountByNumber(customer, accountNumber);
+                Account account = FindAccountByNumber(accountNumber);
                 if (account == null)
                 {
-                    MessageBox.Show("Invalid account number.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Invalid account number or does not belong to you.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                label2.Text = "ACCOUNT STATEMENT ON ACCOUNT NUMBER: " + account.AccountNumber;
+                label2.Text = $"ACCOUNT STATEMENT FOR ACCOUNT NUMBER: {account.AccountNumber}";
 
-                // Run transaction loading in a separate thread
-                //List<Transaction> transactions = await Task.Run(() => FileStorage.LoadTransactions());
+               
+                var accountTransactions = DataStore.transactions
+                    .Where(t => t.AccountNumber == accountNumber)
+                    .OrderByDescending(t => t.TransactionDate)
+                    .ToList();
 
-                //DataStore.transactions = transactions.FindAll(t => t.AccountNumber == account.AccountNumber);
-
-                // Update UI on the main thread
-                UpdateTransactionGrid(DataStore.transactions);
+                UpdateTransactionGrid(accountTransactions);
             }
             catch (Exception ex)
             {
@@ -75,37 +87,26 @@ namespace AdolBankWinforms.Forms
                 dataGridView1.Columns.Add("Balance", "Balance");
             }
 
-            if (transactions != null && transactions.Count > 0)
+            if (transactions.Any())
             {
                 foreach (var transaction in transactions)
                 {
                     dataGridView1.Rows.Add(
                         transaction.TransactionDate,
                         transaction.TransactionType,
-                        transaction.Amount,
-                        transaction.Balance
+                        $"{transaction.Amount:C}",
+                        $"{transaction.Balance:C}"
                     );
                 }
             }
             else
             {
                 MessageBox.Show("No transactions available for this account.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
 
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ReadOnly = true;
-        }
-
-        private void DisplayAccountStatementForm_Load(object sender, EventArgs e)
-        {
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-        }
-
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
         }
     }
 }
